@@ -1,0 +1,79 @@
+CREATE TABLE Marcas (
+ID              INT PRIMARY KEY AUTO_INCREMENT,
+Nome            VARCHAR(60) NOT NULL,
+Nacionalidade   VARCHAR(60)
+);
+
+CREATE TABLE Produtos ( 
+ID                   INT PRIMARY KEY AUTO_INCREMENT,
+Nome                 VARCHAR(70) NOT NULL,
+Estoque              INT         NOT NULL DEFAULT 0,
+EstoqueMinimo        INT         NOT NULL DEFAULT 0,
+Data_de_fabricação   TIMESTAMP        DEFAULT now(),
+Perecivel            BOOLEAN,
+Valor                DECIMAL (10, 2),
+Marca_ID             INT,
+CONSTRAINT fk_Marcas     FOREIGN KEY(marca_id)  REFERENCES Marcas(ID)
+);
+
+CREATE TABLE Fornecedores (
+ID             INT PRIMARY KEY AUTO_INCREMENT,
+Nome           VARCHAR(60)  NOT NULL,
+Email          VARCHAR(60)
+);
+
+CREATE TABLE Produtos_Fornecedores (
+Pf_Produtos_ID      INT   REFERENCES  Produtos(ID),
+Pf_Fornecedores_ID INT   REFERENCES  Fornecedores(ID),
+PRIMARY KEY (Pf_Produtos_ID, Pf_Fornecedores_ID)
+ );
+
+INSERT INTO Marcas (Nome, Nacionalidade) VALUES 
+('Nike', 'Estados Unidos'),
+('Adidas', 'Alemanha'),
+('Apple', 'Estados Unidos'),
+('Samsung', 'Coreia do Sul');
+
+INSERT INTO Produtos (Nome, Estoque, EstoqueMinimo, Perecivel, Valor, Marca_ID) VALUES 
+('Tênis de Corrida', 100, 20, FALSE, 199.99, 1),
+('Camiseta Esportiva', 150, 30, FALSE, 29.99, 1),
+('iPhone 13', 50, 10, FALSE, 999.00, 3),
+('Galaxy S21', 70, 15, FALSE, 899.00, 4);
+
+INSERT INTO Fornecedores (Nome, Email) VALUES 
+('Fornecedor A', 'fornecedorA@example.com'),
+('Fornecedor B', 'fornecedorB@example.com'),
+('Fornecedor C', 'fornecedorC@example.com'),
+('Fornecedor D', 'fornecedorD@example.com');
+
+INSERT INTO Produtos_Fornecedores (Pf_Produtos_ID, Pf_Fornecedores_ID) VALUES 
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 3),
+(3, 3),
+(3, 4),
+(4, 2),
+(4, 4);
+
+CREATE VIEW Produtos_Marcas_View AS SELECT P.ID AS ID_Produto, P.Nome AS Nome_Produto, M.Nome AS Nome_Marca FROM Produtos P JOIN Marcas M ON P.Marca_ID = M.ID;
+
+CREATE VIEW Produtos_Fornecedores_View AS SELECT P.ID AS ID_Produto, P.Nome AS Nome_Produto, F.Nome AS Nome_Fornecedor FROM Produtos P JOIN Produtos_Fornecedores PF ON P.ID = PF.Pf_Produtos_ID JOIN Fornecedores F ON PF.Pf_Fornecedores_ID = F.ID;
+
+CREATE VIEW Produtos_Marcas_Fornecedores_View AS SELECT P.ID AS ID_Produto, P.Nome AS Nome_Produto, M.Nome AS Nome_Marca, F.Nome AS Nome_Fornecedor
+FROM Produtos P JOIN Marcas M ON P.Marca_ID = M.ID JOIN Produtos_Fornecedores PF ON P.ID = PF.Pf_Produtos_ID JOIN Fornecedores F ON PF.Pf_Fornecedores_ID = F.ID;
+
+CREATE VIEW Produtos_Estoque_Baixo_View AS SELECT * FROM Produtos WHERE Estoque < EstoqueMinimo;
+
+ALTER TABLE Produtos
+ADD Data_de_validade DATE;
+
+INSERT INTO Produtos (Nome, Estoque, EstoqueMinimo, Data_de_validade)
+VALUES 
+('Produto1', 10, 5, '2024-04-01'),
+('Produto2', 20, 8, '2024-05-15');
+
+CREATE VIEW Produtos_Validade_Vencida_View AS SELECT P.ID AS ID_Produto, P.Nome AS Nome_Produto, M.Nome AS Nome_Marca, P.Data_de_validade
+FROM Produtos P JOIN Marcas M ON P.Marca_ID = M.ID WHERE P.Data_de_validade < CURDATE();
+
+SELECT * FROM Produtos WHERE Valor > (SELECT AVG(Valor) FROM Produtos);
